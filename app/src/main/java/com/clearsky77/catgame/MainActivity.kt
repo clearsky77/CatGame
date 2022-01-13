@@ -6,6 +6,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.rewarded.RewardedAd
 import kotlinx.android.synthetic.main.activity_main.*
 
 /** Main Activity. Inflates main activity xml and child fragments.  */
@@ -13,9 +14,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var adView: AdView
 
+    private var mRewardedAd: RewardedAd? = null
+    private final var TAG = "태그"
+
     companion object {
         // This is an ad unit ID for a test ad. Replace with your own banner ad unit ID.
-        private val AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // 아이디 넣기(구글 테스트용 ID)
+        private val AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // 배너 아이디(구글 테스트용 ID)
+        private val AD_REWARD_ID = "ca-app-pub-3940256099942544/5224354917" // 보상형 아이디(구글 테스트용 ID)
     }
 
     private val adSize: AdSize // 화면 가로 사이즈
@@ -39,14 +44,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize the Mobile Ads SDK.
-        MobileAds.initialize(this) { } // 애드몹 초기화
+        setValues()
+        setupEvents()
+    }
 
+    private fun setValues() {
+        MobileAds.initialize(this) { } // 애드몹 초기화
         adView = AdView(this)
         ad_view_container.addView(adView) // 레이아웃에 에드뷰 연결
-
         loadBanner()
     }
+
+    private fun setupEvents(){
+
+    }
+
 
     private fun loadBanner() {
         adView.adUnitId = AD_UNIT_ID // 광고 유닛 아이디
