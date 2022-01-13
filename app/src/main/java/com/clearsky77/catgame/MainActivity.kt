@@ -1,156 +1,65 @@
 package com.clearsky77.catgame
-
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import android.widget.Button
-import android.widget.TextView
-
 import android.os.Bundle
-import android.util.Log
+import android.util.DisplayMetrics
 import androidx.appcompat.app.AppCompatActivity
-import android.view.Menu
-import android.view.MenuItem
-import android.widget.Toast
-import com.clearsky77.catgame.databinding.ActivityMainBinding
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import kotlinx.android.synthetic.main.activity_main.*
 
-import java.util.Locale
-
-// Remove the line below after defining your own ad unit ID.
-private const val TOAST_TEXT = "Test ads are being shown. " +
-        "To show live ads, replace the ad unit ID in res/values/strings.xml " +
-        "with your own ad unit ID."
-private const val START_LEVEL = 1
-
+/** Main Activity. Inflates main activity xml and child fragments.  */
 class MainActivity : AppCompatActivity() {
+    private lateinit var adView: AdView
 
-    private var currentLevel: Int = 0
-    private var interstitialAd: InterstitialAd? = null
-    private lateinit var nextLevelButton: Button
-    private lateinit var levelTextView: TextView
-    private val TAG = "MainActivity"
-    private lateinit var binding: ActivityMainBinding
+    // Determine the screen width (less decorations) to use for the ad width.
+    // If the ad hasn't been laid out, default to the full screen width.
+    private val adSize: AdSize
+        get() {
+            val display = windowManager.defaultDisplay
+            val outMetrics = DisplayMetrics()
+            display.getMetrics(outMetrics)
+
+            val density = outMetrics.density
+
+            var adWidthPixels = ad_view_container.width.toFloat()
+            if (adWidthPixels == 0f) {
+                adWidthPixels = outMetrics.widthPixels.toFloat()
+            }
+
+            val adWidth = (adWidthPixels / density).toInt()
+            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this) { } // 애드몹 초기화
 
-        MobileAds.initialize(
-            this
-        ) { }
-        // Load the InterstitialAd and set the adUnitId (defined in values/strings.xml).
-        loadInterstitialAd()
+        adView = AdView(this)
+        ad_view_container.addView(adView) // 레이아웃에 에드뷰 연결
 
-        // Create the next level button, which tries to show an interstitial when clicked.
-        nextLevelButton = binding.nextLevelButton
-        nextLevelButton.isEnabled = false
-        nextLevelButton.setOnClickListener { showInterstitial() }
+        loadBanner()
+    }
 
-        levelTextView = binding.level
-        // Create the text view to show the level number.
-        currentLevel = START_LEVEL
+    private fun loadBanner() {
+        adView.adUnitId = AD_UNIT_ID // 광고 유닛 아이디
+        adView.adSize = adSize // 사이즈 넣기
 
-        // Toasts the test ad message on the screen. Remove this after defining your own ad unit ID.
-        Toast.makeText(this, TOAST_TEXT, Toast.LENGTH_LONG).show()
-
-
-//        mAdView = findViewById(R.id.adView)
+        // Create an ad request. Check your logcat output for the hashed device ID to
+        // get test ads on a physical device, e.g.,
+        // "Use AdRequest.Builder.addTestDevice("ABCDE0123") to get test ads on this device."
+//        val adRequest = AdRequest.Builder().addTestDevice(AdRequest.DEVICE_ID_EMULATOR).build()
         val adRequest = AdRequest.Builder().build()
-        adView.loadAd(adRequest)
 
+        // Start loading the ad in the background.
+        adView.loadAd(adRequest) // 애드뷰 로드
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem) =
-        when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-
-    private fun loadInterstitialAd() {
-        val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(this, getString(R.string.interstitial_ad_unit_id), adRequest,
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: InterstitialAd) {
-                    // The interstitialAd reference will be null until
-                    // an ad is loaded.
-                    interstitialAd = ad
-                    nextLevelButton.setEnabled(true)
-                    Toast.makeText(this@MainActivity, "onAdLoaded()", Toast.LENGTH_SHORT)
-                        .show()
-                    ad.setFullScreenContentCallback(
-                        object : FullScreenContentCallback() {
-                            override fun onAdDismissedFullScreenContent() {
-                                // Called when fullscreen content is dismissed.
-                                // Make sure to set your reference to null so you don't
-                                // show it a second time.
-                                interstitialAd = null
-                                Log.d(TAG, "The ad was dismissed.")
-                            }
-
-                            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                                // Called when fullscreen content failed to show.
-                                // Make sure to set your reference to null so you don't
-                                // show it a second time.
-                                interstitialAd = null
-                                Log.d(TAG, "The ad failed to show.")
-                            }
-
-                            override fun onAdShowedFullScreenContent() {
-                                // Called when fullscreen content is shown.
-                                Log.d(TAG, "The ad was shown.")
-                            }
-                        })
-                }
-
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    // Handle the error
-                    Log.i(TAG, loadAdError.message)
-                    interstitialAd = null
-                    nextLevelButton.setEnabled(true)
-                    val error: String = String.format(
-                        Locale.ENGLISH,
-                        "domain: %s, code: %d, message: %s",
-                        loadAdError.domain,
-                        loadAdError.code,
-                        loadAdError.message
-                    )
-                    Toast.makeText(
-                        this@MainActivity,
-                        "onAdFailedToLoad() with error: $error", Toast.LENGTH_SHORT
-                    )
-                        .show()
-                }
-            })
-    }
-
-    private fun showInterstitial() {
-        // Show the ad if it"s ready. Otherwise toast and reload the ad.
-        if (interstitialAd != null) {
-            interstitialAd!!.show(this)
-        } else {
-            Toast.makeText(this, "Ad did not load", Toast.LENGTH_SHORT).show()
-            goToNextLevel()
-        }
-    }
-
-    private fun goToNextLevel() {
-        // Show the next level and reload the ad to prepare for the level after.
-        levelTextView.text = "Level " + (++currentLevel)
-        if (interstitialAd == null) {
-            loadInterstitialAd()
-        }
+    companion object {
+        // This is an ad unit ID for a test ad. Replace with your own banner ad unit ID.
+        private val AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // 아이디 넣기(구글 테스트용 ID)
     }
 }
