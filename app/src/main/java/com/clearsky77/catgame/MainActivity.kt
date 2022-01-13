@@ -10,11 +10,15 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 /** Main Activity. Inflates main activity xml and child fragments.  */
 class MainActivity : AppCompatActivity() {
+
     private lateinit var adView: AdView
 
-    // Determine the screen width (less decorations) to use for the ad width.
-    // If the ad hasn't been laid out, default to the full screen width.
-    private val adSize: AdSize
+    companion object {
+        // This is an ad unit ID for a test ad. Replace with your own banner ad unit ID.
+        private val AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // 아이디 넣기(구글 테스트용 ID)
+    }
+
+    private val adSize: AdSize // 화면 가로 사이즈
         get() {
             val display = windowManager.defaultDisplay
             val outMetrics = DisplayMetrics()
@@ -48,18 +52,10 @@ class MainActivity : AppCompatActivity() {
         adView.adUnitId = AD_UNIT_ID // 광고 유닛 아이디
         adView.adSize = adSize // 사이즈 넣기
 
-        // Create an ad request. Check your logcat output for the hashed device ID to
-        // get test ads on a physical device, e.g.,
-        // "Use AdRequest.Builder.addTestDevice("ABCDE0123") to get test ads on this device."
-//        val adRequest = AdRequest.Builder().addTestDevice(AdRequest.DEVICE_ID_EMULATOR).build()
         val adRequest = AdRequest.Builder().build()
 
-        // Start loading the ad in the background.
         adView.loadAd(adRequest) // 애드뷰 로드
     }
 
-    companion object {
-        // This is an ad unit ID for a test ad. Replace with your own banner ad unit ID.
-        private val AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // 아이디 넣기(구글 테스트용 ID)
-    }
+
 }
